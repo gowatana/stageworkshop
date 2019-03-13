@@ -223,6 +223,24 @@ function validate_clusters() {
 }
 
 function diagnostics_clusters() {
+  set -x
+  for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^\#)
+  do
+    set -f
+    # shellcheck disable=2206
+        _fields=(${_cluster//|/ })
+        PE_HOST=${_fields[0]}
+    PE_PASSWORD=${_fields[1]}
+
+    prism_check 'PE'
+    if (( $? == 0 )) ; then
+      log "Success: execute PE API on ${PE_HOST}"
+    else
+      log "Failure: cannot validate PE API on ${PE_HOST}"
+    fi
+    #ssh nutanix@${PE_HOST} "date"
+    ssh nutanix@${PE_HOST} "source /etc/profile.d/nutanix_env.sh && ~/diagnostics/diagnostics.py run_iperf"
+  done
 }
 
 function script_usage() {
@@ -279,6 +297,10 @@ function select_workshop() {
         validate_clusters
         break
         ;;
+      "Diagnostics Clusters")
+        diagnostics_clusters
+        break
+        ;;
       "Quit")
         exit
         ;;
@@ -319,6 +341,7 @@ function select_workshop() {
 begin
 
     _VALIDATE='Validate Staged Clusters'
+ _DIAGNOSTICS='Diagnostics Clusters'
 _CLUSTER_FILE='Cluster Input File'
  CLUSTER_LIST=
 
@@ -326,6 +349,7 @@ _CLUSTER_FILE='Cluster Input File'
              WORKSHOP_COUNT=${#WORKSHOPS[@]}
 WORKSHOPS[${#WORKSHOPS[@]}]="Change ${_CLUSTER_FILE}"
 WORKSHOPS[${#WORKSHOPS[@]}]=${_VALIDATE}
+WORKSHOPS[${#WORKSHOPS[@]}]=${_DIAGNOSTICS}
 WORKSHOPS[${#WORKSHOPS[@]}]="Quit"
            let NONWORKSHOPS=${#WORKSHOPS[@]}-${WORKSHOP_COUNT}
 
@@ -392,3 +416,6 @@ else
   #log "DEBUG: WORKSHOP_NUM=${WORKSHOP_NUM}"
   script_usage
 fi
+
+
+
