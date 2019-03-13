@@ -12,6 +12,7 @@ WORKSHOPS=(\
 "Tech Summit 2019 (AOS 5.10+/AHV PC 5.10+) = Development" \
 "Add Files ${FILES_VERSION} to PE" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
+"POC prepation from laptop (AOS/PC 5.10)" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
@@ -61,6 +62,11 @@ function stage_clusters() {
   if (( $(echo ${_workshop} | grep -i Files | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh'
     _pe_launch='files.sh'
+  fi
+  if (( $(echo ${_workshop} | grep -i laptop | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='laptop.sh'
+    _pc_launch=${_pe_launch}
   fi
 
   dependencies 'install' 'sshpass'
@@ -191,10 +197,11 @@ EOM
 function pe_configuration_args() {
   local _pc_launch="${1}"
 
-  PE_CONFIGURATION="EMAIL=${EMAIL} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PE_HOST=${PE_HOST} PC_LAUNCH=${_pc_launch} PC_VERSION=${PC_VERSION}"
+  PE_CONFIGURATION="FOUNDATION_HOST=${FOUNDATION_HOST:-""} EMAIL=${EMAIL} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PE_HOST=${PE_HOST} PC_LAUNCH=${_pc_launch} PC_VERSION=${PC_VERSION}"
 }
 
 function validate_clusters() {
+  set -x
   local _cluster
   local  _fields
 
@@ -213,6 +220,9 @@ function validate_clusters() {
       log "Failure: cannot validate PE API on ${PE_HOST}"
     fi
   done
+}
+
+function diagnostics_clusters() {
 }
 
 function script_usage() {
